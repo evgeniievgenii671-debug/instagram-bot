@@ -1,15 +1,12 @@
 import os
 import requests
 from flask import Flask, request, jsonify
-from groq import Groq
 
 app = Flask(__name__)
 
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
 META_ACCESS_TOKEN = os.environ.get("META_ACCESS_TOKEN")
 VERIFY_TOKEN = os.environ.get("VERIFY_TOKEN", "ai_boty_kz_token")
-
-groq_client = Groq(api_key=GROQ_API_KEY) if GROQ_API_KEY else None
 
 @app.route("/", methods=["GET"])
 def home():
@@ -43,20 +40,29 @@ def handle_webhook():
     return jsonify({"status": "ok"}), 200
 
 def generate_ai_response(prompt):
-    if not groq_client:
+    if not GROQ_API_KEY:
         return "AI is not configured."
+    
+    url = "https://api.groq.com/openai/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {GROQ_API_KEY}",
+        "Content-Type": "application/json"
+    }
+    payload = {
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": "Ты вежливый и полезный ИИ-ассистент для Instagram-аккаунта @ai_boty_kz."},
+            {"role": "user", "content": prompt}
+        ],
+        "temperature": 0.7
+    }
+    
     try:
-        completion = groq_client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[
-                {"role": "system", "content": "Ты вежливый ИИ-ассистент для Instagram-аккаунта @ai_boty_kz."},
-                {"role": "user", "content": prompt}
-            ],
-            temperature=0.7,
-        )
-        return completion.choices[0].message.content
+        response = requests.post(url, json=payload, headers=headers)
+        res_data = response.json()
+        return res_data["choices"][0]["message"]["content"]
     except Exception as e:
-        print("Groq error:", e)
+        print("Groq API error:", e)
         return "Извините, сервис временно занят."
 
 def send_instagram_message(recipient_id, text):
