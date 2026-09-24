@@ -42,7 +42,7 @@ def handle_webhook():
 def generate_ai_response(prompt):
     if not GROQ_API_KEY:
         return "AI is not configured."
-    
+
     url = "https://api.groq.com/openai/v1/chat/completions"
     headers = {
         "Authorization": f"Bearer {GROQ_API_KEY}",
@@ -56,7 +56,7 @@ def generate_ai_response(prompt):
         ],
         "temperature": 0.7
     }
-    
+
     try:
         response = requests.post(url, json=payload, headers=headers)
         res_data = response.json()
@@ -75,5 +75,5 @@ def send_instagram_message(recipient_id, text):
     requests.post(url, json=payload)
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 5000))
+    port = int(os.environ.get("PORT", 10000))
     app.run(host="0.0.0.0", port=port)
